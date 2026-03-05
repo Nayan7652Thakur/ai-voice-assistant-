@@ -1,65 +1,150 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Orb from "./components/Orb";
+import Transcript from "./components/Transcript";
+import ControlBar from "./components/ControlBar";
+import { TERA_DEMO_SYSTEM_PROMPT } from "./data/aiData";
 
 export default function Home() {
+  const [isMuted, setIsMuted] = useState(true);
+  const [vapiMuted, setVapiMuted] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'listening' | 'speaking'>('idle');
+  const [transcriptText, setTranscriptText] = useState("");
+  const [vapi, setVapi] = useState<any>(null);
+
+  // Vapi integration
+  useEffect(() => {
+    // Dynamically import Vapi to avoid SSR issues with browser APIs
+    let vapiInstance: any;
+
+    const initVapi = async () => {
+      const { default: Vapi } = await import('@vapi-ai/web');
+      vapiInstance = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "e2b55e52-b48a-4a7a-9735-8914fc72803f");
+      setVapi(vapiInstance);
+
+      // Setup Vapi event listeners
+      vapiInstance.on('call-start', () => {
+        setStatus('listening');
+        setTranscriptText("How can I help you?");
+      });
+
+      vapiInstance.on('call-end', () => {
+        setStatus('idle');
+        setTranscriptText("Session ended.");
+        setIsMuted(true);
+      });
+
+      vapiInstance.on('speech-start', () => {
+        setStatus('speaking');
+      });
+
+      vapiInstance.on('speech-end', () => {
+        setStatus('listening');
+      });
+
+      vapiInstance.on('message', (message: any) => {
+        if (message.type === 'transcript' && message.transcriptType === 'final') {
+          setTranscriptText(message.transcript);
+        }
+      });
+
+      vapiInstance.on('error', (e: any) => {
+        console.error("Vapi Error:", e);
+        setStatus('idle');
+        setTranscriptText("Error connecting to Voice assistant.");
+        setIsMuted(true);
+      });
+    };
+
+    initVapi();
+
+    return () => {
+      if (vapiInstance) {
+        vapiInstance.stop();
+        vapiInstance.removeAllListeners();
+      }
+    };
+  }, []);
+
+  const handleToggleMute = () => {
+    if (!vapi) return;
+
+    if (status === 'idle') {
+      // Start call
+      setStatus('listening');
+      setTranscriptText("Connecting...");
+      setIsMuted(false);
+
+      const strictInstructions = `\n\nCRITICAL INSTRUCTION: You must ONLY answer questions using the information provided in this system prompt above. If the user asks a question and the answer is not explicitly found in this prompt, you MUST say exactly: 'The data is not available.' Do not attempt to guess, extrapolate, or provide outside information under any circumstances.`;
+
+      vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "61bb6f63-fc75-4211-8aee-1b0e1af0da30", {
+        model: {
+          provider: "openai",
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: TERA_DEMO_SYSTEM_PROMPT + strictInstructions
+            }
+          ]
+        }
+      });
+    } else {
+      // For now, toggle mute means stop call if active, based on user request "red button declines"
+      setVapiMuted(!vapiMuted);
+      vapi.setMuted(!vapiMuted);
+    }
+  };
+
+  const handleEndCall = () => {
+    if (vapi && status !== 'idle') {
+      vapi.stop();
+      setStatus('idle');
+      setTranscriptText("Call declined/ended.");
+      setIsMuted(true);
+    }
+  };
+
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex flex-col min-h-screen relative overflow-hidden bg-black text-white selection:bg-primary/30">
+
+      {/* Dynamic Background Noise / Blur effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] mix-blend-screen mix-blend-lighten animate-spin-slow"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px] mix-blend-screen mix-blend-lighten animate-float" style={{ animationDuration: '12s' }}></div>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative z-10 w-full max-w-5xl mx-auto h-full mt-10 md:mt-0">
+
+        {/* Top Spacer / Header Area */}
+        <div className="absolute top-8 w-full flex justify-center opacity-60 text-sm font-light tracking-widest uppercase">
+          <span className="text-gradient font-semibold">AI Assistant</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Central Orb Visualization */}
+        <div className={`transition-all duration-700 ease-in-out ${status === 'speaking' ? 'scale-110 drop-shadow-[0_0_60px_rgba(139,92,246,0.3)]' : status === 'listening' ? 'scale-100' : 'scale-90 opacity-80'}`}>
+          <Orb />
         </div>
+
+        {/* Transcript / Caption Area */}
+        <div className="mt-12 md:mt-24 w-full flex justify-center">
+          <Transcript status={status} text={transcriptText} />
+        </div>
+
       </main>
+
+      {/* Fixed Bottom Control Bar */}
+      <div className="fixed bottom-8 w-full z-50 flex justify-center px-4">
+        <ControlBar
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          onEndCall={handleEndCall}
+        />
+      </div>
+
     </div>
   );
 }
