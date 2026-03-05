@@ -137,7 +137,7 @@ export default function Home() {
       </main>
 
       {/* Fixed Bottom Control Bar */}
-      <div className="fixed bottom-8 w-full z-50 flex justify-center px-4">
+      <div className="fixed  w-full z-50 flex justify-center px-4">
         <ControlBar
           isMuted={isMuted}
           onToggleMute={handleToggleMute}
