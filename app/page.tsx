@@ -26,7 +26,7 @@ export default function Home() {
       // Setup Vapi event listeners
       vapiInstance.on('call-start', () => {
         setStatus('listening');
-        setTranscriptText("How can I help you?");
+        // setTranscriptText("How can I help you?");
       });
 
       vapiInstance.on('call-end', () => {
