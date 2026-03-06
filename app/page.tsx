@@ -1,147 +1,55 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Orb from "./components/Orb";
 import Transcript from "./components/Transcript";
 import ControlBar from "./components/ControlBar";
-import { TERA_DEMO_SYSTEM_PROMPT } from "./data/aiData";
+import { useVapi } from "./hooks/useVapi";
 
 export default function Home() {
-  const [isMuted, setIsMuted] = useState(true);
-  const [vapiMuted, setVapiMuted] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'listening' | 'speaking'>('idle');
-  const [transcriptText, setTranscriptText] = useState("");
-  const [vapi, setVapi] = useState<any>(null);
-
-  // Vapi integration
-  useEffect(() => {
-    // Dynamically import Vapi to avoid SSR issues with browser APIs
-    let vapiInstance: any;
-
-    const initVapi = async () => {
-      const { default: Vapi } = await import('@vapi-ai/web');
-      vapiInstance = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || "e2b55e52-b48a-4a7a-9735-8914fc72803f");
-      setVapi(vapiInstance);
-
-      // Setup Vapi event listeners
-      vapiInstance.on('call-start', () => {
-        setStatus('listening');
-        // setTranscriptText("How can I help you?");
-      });
-
-      vapiInstance.on('call-end', () => {
-        setStatus('idle');
-        setTranscriptText("Session ended.");
-        setIsMuted(true);
-      });
-
-      vapiInstance.on('speech-start', () => {
-        setStatus('speaking');
-      });
-
-      vapiInstance.on('speech-end', () => {
-        setStatus('listening');
-      });
-
-      vapiInstance.on('message', (message: any) => {
-        if (message.type === 'transcript' && message.transcriptType === 'final') {
-          setTranscriptText(message.transcript);
-        }
-      });
-
-      vapiInstance.on('error', (e: any) => {
-        console.error("Vapi Error:", e);
-        setStatus('idle');
-        setTranscriptText("Error connecting to Voice assistant.");
-        setIsMuted(true);
-      });
-    };
-
-    initVapi();
-
-    return () => {
-      if (vapiInstance) {
-        vapiInstance.stop();
-        vapiInstance.removeAllListeners();
-      }
-    };
-  }, []);
-
-  const handleToggleMute = () => {
-    if (!vapi) return;
-
-    if (status === 'idle') {
-      // Start call
-      setStatus('listening');
-      setTranscriptText("Connecting...");
-      setIsMuted(false);
-
-      const strictInstructions = `\n\nCRITICAL INSTRUCTION: You must ONLY answer questions using the information provided in this system prompt above. If the user asks a question and the answer is not explicitly found in this prompt, you MUST say exactly: 'The data is not available.' Do not attempt to guess, extrapolate, or provide outside information under any circumstances.`;
-
-      vapi.start(process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || "61bb6f63-fc75-4211-8aee-1b0e1af0da30", {
-        model: {
-          provider: "openai",
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: TERA_DEMO_SYSTEM_PROMPT + strictInstructions
-            }
-          ]
-        }
-      });
-    } else {
-      // For now, toggle mute means stop call if active, based on user request "red button declines"
-      setVapiMuted(!vapiMuted);
-      vapi.setMuted(!vapiMuted);
-    }
-  };
-
-  const handleEndCall = () => {
-    if (vapi && status !== 'idle') {
-      vapi.stop();
-      setStatus('idle');
-      setTranscriptText("Call declined/ended.");
-      setIsMuted(true);
-    }
-  };
-
+  const { isMuted, status, transcriptText, toggleMute, endCall } = useVapi();
 
   return (
-    <div className="flex flex-col min-h-screen relative overflow-hidden bg-black text-white selection:bg-primary/30">
+    <div className="flex flex-col min-h-screen relative overflow-hidden bg-background text-foreground selection:bg-primary/30">
 
-      {/* Dynamic Background Noise / Blur effects */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] mix-blend-screen mix-blend-lighten animate-spin-slow"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px] mix-blend-screen mix-blend-lighten animate-float" style={{ animationDuration: '12s' }}></div>
+      {/* Modern High-End Aurora Background Effects */}
+      <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none bg-background">
+        {/* Deep ambient glow */}
+        <div className="absolute w-[80vw] h-[80vh] top-[10%] left-[10%] bg-primary/10 rounded-full blur-[160px] mix-blend-screen mix-blend-lighten animate-spin-slow"></div>
+        {/* Dynamic bright spot 1 (Cyan/Teal) */}
+        <div className="absolute w-[50vw] h-[50vh] top-[-10%] right-[-10%] bg-secondary/15 rounded-full blur-[120px] mix-blend-screen mix-blend-lighten animate-float" style={{ animationDuration: '14s' }}></div>
+        {/* Dynamic bright spot 2 (Rose/Pink) */}
+        <div className="absolute w-[60vw] h-[60vh] bottom-[-20%] left-[-20%] bg-accent/15 rounded-full blur-[140px] mix-blend-screen mix-blend-lighten animate-float" style={{ animationDuration: '18s', animationDelay: '2s' }}></div>
+
+        {/* Optional noise texture overlay for realism (using CSS radial-gradient as fallback) */}
+        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle at center, #ffffff 1px, transparent 1px)', backgroundSize: '4px 4px' }}></div>
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative z-10 w-full max-w-5xl mx-auto h-full mt-10 md:mt-0">
+      <main className="flex-1 flex flex-col items-center justify-center p-6  pb-32 relative z-10 w-full max-w-5xl mx-auto h-full mt-10 md:mt-0">
 
-        {/* Top Spacer / Header Area */}
-        <div className="absolute top-8 w-full flex justify-center opacity-60 text-sm font-light tracking-widest uppercase">
-          <span className="text-gradient font-semibold">AI Assistant</span>
-        </div>
 
-        {/* Central Orb Visualization */}
-        <div className={`transition-all duration-700 ease-in-out ${status === 'speaking' ? 'scale-110 drop-shadow-[0_0_60px_rgba(139,92,246,0.3)]' : status === 'listening' ? 'scale-100' : 'scale-90 opacity-80'}`}>
-          <Orb />
+        {/* Central Orb Visualization container */}
+        <div className={`transition-all duration-1000 cubic-bezier(0.4, 0, 0.2, 1) ${status === 'speaking' ? 'scale-[1.15] drop-shadow-[0_0_80px_rgba(139,92,246,0.4)]' :
+          status === 'listening' ? 'scale-100 drop-shadow-[0_0_40px_rgba(6,182,212,0.2)]' :
+            'scale-90 opacity-70 grayscale-[20%]'
+          }`}>
+          <Orb status={status} />
         </div>
 
         {/* Transcript / Caption Area */}
-        <div className="mt-12 md:mt-24 w-full flex justify-center">
+        <div className="mt-8 md:mt-1 w-full flex justify-center perspective-[1000px]">
           <Transcript status={status} text={transcriptText} />
         </div>
 
       </main>
 
-      {/* Fixed Bottom Control Bar */}
-      <div className="fixed  w-full z-50 flex justify-center px-4">
+      {/* Floating Modern Bottom Control Bar */}
+      <div className="fixed bottom-0 w-full z-50 flex justify-center pb-8 px-4 bg-gradient-to-t from-background via-background/80 to-transparent pt-12">
         <ControlBar
           isMuted={isMuted}
-          onToggleMute={handleToggleMute}
-          onEndCall={handleEndCall}
+          onToggleMute={toggleMute}
+          onEndCall={endCall}
         />
       </div>
 
