@@ -11,15 +11,8 @@ export default function ControlBar({ isMuted, onToggleMute, onEndCall }: Control
         <div className="glass-panel rounded-full px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-center gap-4 sm:gap-8 mx-auto w-max mb-4  transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.05)] hover:bg-zinc-900/40">
 
             <button
-                className="p-3 sm:p-4 rounded-full transition-all duration-300 text-zinc-400 hover:text-white hover:bg-white/5 active:scale-95"
-                aria-label="Settings"
-            >
-                <Settings size={22} className="opacity-80" />
-            </button>
-
-            <button
                 onClick={onToggleMute}
-                className={`relative group p-5 sm:p-6 rounded-full transition-all duration-500 active:scale-95 overflow-hidden ${isMuted
+                className={`relative group p-4 sm:p-5 rounded-full transition-all duration-500 active:scale-95 overflow-hidden ${isMuted
                     ? 'bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700/80 border border-white/5 shadow-inner'
                     : 'bg-zinc-100 text-zinc-900 hover:bg-white shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.5)]'
                     }`}
