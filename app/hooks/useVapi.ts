@@ -37,7 +37,7 @@ export function useVapi() {
             });
 
             vapiInstance.on('message', (message: any) => {
-                if (message.type === 'transcript' && message.transcriptType === 'final') {
+                if (message.type === 'transcript') {
                     setTranscriptText(message.transcript);
                 }
             });
