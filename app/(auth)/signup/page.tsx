@@ -11,10 +11,8 @@ export default function SignupPage() {
         name: "",
         email: "",
         password: "",
-        confirmPassword: "",
     });
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -27,10 +25,6 @@ export default function SignupPage() {
         e.preventDefault();
         setError("");
 
-        if (formData.password !== formData.confirmPassword) {
-            setError("Passwords do not match.");
-            return;
-        }
 
         if (formData.password.length < 6) {
             setError("Password must be at least 6 characters.");
@@ -195,32 +189,7 @@ export default function SignupPage() {
                             )}
                         </div>
 
-                        <div className="auth-field">
-                            <label htmlFor="confirmPassword" className="auth-label">
-                                Confirm password
-                            </label>
-                            <div className="auth-input-wrapper">
-                                <input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type={showConfirm ? "text" : "password"}
-                                    autoComplete="new-password"
-                                    required
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    placeholder="••••••••"
-                                    className="auth-input auth-input-pwd"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirm((v) => !v)}
-                                    className="auth-eye-btn"
-                                    aria-label={showConfirm ? "Hide password" : "Show password"}
-                                >
-                                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
+
 
                         <button
                             type="submit"
