@@ -1,16 +1,23 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Orb from "./components/Orb";
 import Transcript from "./components/Transcript";
 import ControlBar from "./components/ControlBar";
+import Header from "./components/Header";
+import Drawer from "./components/Drawer";
 import { useVapi } from "./hooks/useVapi";
 
 export default function Home() {
   const { isMuted, status, transcriptText, toggleMute, endCall } = useVapi();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen relative overflow-hidden bg-background text-foreground selection:bg-primary/30">
+
+      {/* Header & Drawer */}
+      <Header onOpenDrawer={() => setIsDrawerOpen(true)} />
+      <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
 
       {/* Modern High-End Aurora Background Effects */}
       <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none bg-background">

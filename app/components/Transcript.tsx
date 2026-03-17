@@ -36,7 +36,7 @@ export default function Transcript({ status, text }: TranscriptProps) {
 
             {/* High-End Transcript Text */}
             <div className={`transition-all duration-700 transform ${status === 'idle' ? 'translate-y-4 opacity-30 scale-95 md:scale-95' : 'translate-y-0 opacity-100 scale-100'}`}>
-                <p className={`text-3xl md:text-4xl font-semibold tracking-tight leading-tight ${status === 'speaking' ? 'text-gradient' : 'text-zinc-100 drop-shadow-md'
+                <p className={`text-3xl md:text-4xl font-semibold tracking-tight leading-tight whitespace-pre-wrap ${status === 'speaking' ? 'text-gradient' : 'text-zinc-100 drop-shadow-md'
                     }`}>
                     {text || "How can I assist you?"}
                 </p>
