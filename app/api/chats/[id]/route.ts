@@ -20,7 +20,7 @@ async function authenticate(req: NextRequest) {
     }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const user = await authenticate(req);
         if (!user) {
